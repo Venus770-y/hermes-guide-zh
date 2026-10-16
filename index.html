@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Hermes 技能与工具 · 中文注释</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{font-family:inherit;color:var(--foreground);background:transparent;margin:0;padding:2px 0 8px;line-height:1.6}
+  h1{font-size:19px;margin:0 0 2px;font-weight:650}
+  .sub{color:var(--muted-foreground);font-size:12.5px;margin-bottom:14px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  input[type=search]{font:inherit;font-size:13px;padding:7px 11px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--foreground);width:230px;outline:none}
+  input[type=search]:focus{border-color:var(--accent)}
+  .chip{font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--muted-foreground);cursor:pointer;white-space:nowrap}
+  .chip:hover{border-color:var(--accent);color:var(--foreground)}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:var(--card);font-weight:600}
+  section{margin-bottom:20px}
+  h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground);margin:0 0 8px;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:7px}
+  .item{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 12px}
+  .item .n{font-size:13.5px;font-weight:600;display:flex;gap:7px;align-items:baseline;flex-wrap:wrap}
+  .item .n code{font-size:11.5px;font-weight:400;color:var(--muted-foreground);background:transparent;padding:0}
+  .item .d{font-size:12.5px;color:var(--muted-foreground);margin-top:3px}
+  .item .d b{color:var(--foreground);font-weight:600}
+  .empty{color:var(--muted-foreground);font-size:13px;padding:14px 0}
+  .count{font-size:11.5px;color:var(--muted-foreground);margin-left:auto}
+</style>
+</head>
+<body>
+<h1>Hermes 技能与工具 · 中文注释</h1>
+<div class="sub">共 <span id="tot"></span> 条。上面搜索框可以打中文（比如「PDF」「硬件」「视频」）直接筛。</div>
+
+<div class="bar">
+  <input type="search" id="q" placeholder="搜索：pdf / 硬件 / 视频 / 邮件…">
+  <button class="chip on" data-c="all">全部</button>
+  <button class="chip" data-c="skill">技能</button>
+  <button class="chip" data-c="tool">工具</button>
+  <span class="count" id="cnt"></span>
+</div>
+
+<div id="out"></div>
+
+<script>
+const DATA = [
+/* ============ 技能 ============ */
+["skill","自主 AI 代理","claude-code","Claude Code","把写代码的活外包给 Anthropic 的 Claude Code 命令行：做功能、提 PR。"],
+["skill","自主 AI 代理","codex","OpenAI Codex","同上，外包给 OpenAI 的 Codex 命令行。"],
+["skill","自主 AI 代理","opencode","OpenCode","同上，外包给 OpenCode 命令行（也能做代码审查）。"],
+["skill","自主 AI 代理","computer-use","操作你的桌面","截屏 + 鼠标键盘。帮我点那些没有命令行接口的软件界面。"],
+["skill","自主 AI 代理","hermes-agent","Hermes 使用手册","配置、换主题、装插件、排错 Hermes 时我看的说明书。"],
+["skill","创作","architecture-diagram","架构图","画深色风格的系统 / 云 / 机房架构 SVG 图，输出成网页。"],
+["skill","创作","ascii-video","字符画视频","把视频或音频转成彩色 ASCII 字符动画（MP4 / GIF）。"],
+["skill","创作","baoyu-infographic","信息图","21 种排版 × 21 种风格，做中文信息图、可视化长图。"],
+["skill","创作","claude-design","网页设计","做一次性的 HTML 作品：落地页、演示卡片、界面原型。"],
+["skill","创作","design-md","设计规范文件","写 / 校验 Google 的 DESIGN.md 设计令牌规范。"],
+["skill","创作","humanizer","去 AI 味","把文字里的机器腔洗掉，写得像真人写的。"],
+["skill","创作","manim-video","数学动画","用 Manim 做 3Blue1Brown 那种数学 / 算法讲解动画。"],
+["skill","创作","p5js","创意编程","p5.js 生成艺术、着色器、交互作品、3D。"],
+["skill","创作","popular-web-designs","现成设计系统","54 套真网站的设计语言（Stripe、Linear、Vercel），拿来直接套。"],
+["skill","创作","songwriting-and-ai-music","写歌 & AI 音乐","歌词创作方法 + Suno 提示词写法。"],
+["skill","邮件","email-inbox-triage","收件箱分诊","把一堆邮件排优先级、起草回复（不会擅自替你发送）。"],
+["skill","邮件","himalaya","命令行收发邮件","用 himalaya CLI 走 IMAP / SMTP 收发信。"],
+["skill","影音","gif-search","搜 GIF","从 Tenor 下载表情包 / GIF。"],
+["skill","影音","songsee","音频频谱图","生成梅尔频谱、色度图、MFCC 等音频特征图。"],
+["skill","影音","windows-media-control","控 Windows 播放器","用媒体键控制播放，而不是傻点界面。"],
+["skill","影音","youtube-content","YouTube 搬运","抓字幕 → 摘要 / 推文串 / 博客文章。"],
+["skill","笔记","obsidian","Obsidian 笔记库","读、搜、新建、修改你 Obsidian 库里的笔记。"],
+["skill","办公","airtable","Airtable","用官方 API 增删改查记录、筛选、批量写入。"],
+["skill","办公","box","Box 网盘","云文件、共享链接、搜索、元数据。"],
+["skill","办公","document-to-action-items","文档 → 待办","从合同 / 制度文档里抽出义务、截止日期、任务，每条带出处。"],
+["skill","办公","docx","Word 文档","建 / 读 / 改 / 套模板 / 审阅 .docx 文件。"],
+["skill","办公","google-workspace","谷歌全家桶","Gmail、日历、云端硬盘、Docs、Sheets。"],
+["skill","办公","maps","地图路线","地址转坐标、找周边地点、算路线、查时区。"],
+["skill","办公","meeting-action-items","会议纪要 → 待办","把会议记录变成带出处的决议、负责人、工单。"],
+["skill","办公","notion","Notion","页面、数据库、Markdown 双向读写。"],
+["skill","办公","pdf","PDF","建、读、合并、填表、OCR、改文字。"],
+["skill","办公","powerpoint","PPT","用 python-pptx 建 / 读 / 改 .pptx 演示文稿。"],
+["skill","办公","product-price-monitor","盯价格","盯商品 / 机票 / 挂牌价，到目标价提醒你。"],
+["skill","办公","teams-meeting-pipeline","Teams 会议","会议摘要、任务重放、Graph 订阅。"],
+["skill","办公","weekly-review-planning","每周复盘","清点这周承诺、找出卡住的事、排下周计划。"],
+["skill","办公","xlsx","Excel","建 / 读 / 改 .xlsx 工作簿和 CSV。"],
+["skill","研究","arxiv","arXiv 论文","按关键词 / 作者 / 分类 / 编号搜论文并下载。"],
+["skill","研究","competitor-news-monitor","竞品新闻监控","盯指定公司的重要新闻，出带引用的摘要。"],
+["skill","研究","grounded-citations","带出处作答","所有结论都挂可验证的来源链接，不瞎编。"],
+["skill","研究","llm-wiki","LLM 知识库","建 / 查 Karpathy 风格的互链 markdown 知识库。"],
+["skill","软件开发","codebase-inspection","代码量体检","用 pygount 统计行数、语言构成、代码 / 注释比例。"],
+["skill","软件开发","dogfood","挑网页的刺","用真实浏览器搞探索式测试，找 bug、留证据、出报告。"],
+["skill","软件开发","dram-spd-toolkit","内存 SPD","读 / 改 / 刷写内存条 SPD 信息（你之前折腾过的那块）。"],
+["skill","软件开发","github","GitHub 全套","用 gh 命令管登录、仓库、issue、PR、代码审查、CI。"],
+["skill","软件开发","hermes-agent-skill-authoring","自己写技能","写 SKILL.md 的规范：frontmatter 和结构。"],
+["skill","软件开发","inspecting-hermes-desktop-dom","看 Hermes 界面内部","通过 CDP 读桌面端的 DOM / CSS，用于排查界面问题。"],
+["skill","软件开发","node-inspect-debugger","调 Node 程序","用 --inspect + Chrome 协议命令行下断点调试。"],
+["skill","软件开发","requesting-code-review","提交前自查","安全扫描、质量门禁、能自动修的自动修。"],
+["skill","软件开发","simplify-code","简化代码","4 个代理并行清理你刚写的那批代码。"],
+["skill","软件开发","spike","试水实验","先做丢弃式小实验验证想法，再正式动手。"],
+["skill","软件开发","systematic-debugging","系统排错","4 阶段找根因：先搞懂 bug，再改代码。"],
+["skill","软件开发","test-driven-development","测试先行","强制红-绿-重构：先写测试，再写实现。"],
+["skill","软件开发","windows-hardware-identification","认 Windows 硬件","认 PCI / USB 设备、驱动、IOMMU 状态（你最常让我干的活）。"],
+["skill","软件开发","windows-csharp-gui-tool","C# 写 Windows 小工具","用 csc.exe 编译原生 Windows 图形界面 / 托盘图标 / 全局热键小工具。"],
+["skill","破墙","blocked-page-recovery","打不开的网页","遇到 403 / 429、付费墙、WAF、机器人墙时怎么绕过去。"],
+
+/* ============ 工具 ============ */
+["tool","文件与代码","read_file","读文件","带行号读取。Word / Excel / PPT / PDF / EPUB / SQLite 会自动转成文字给我看。"],
+["tool","文件与代码","write_file","写文件","整份写入（覆盖）。新建文件、存结果用它。"],
+["tool","文件与代码","patch","局部改文件","精准替换一小段文字，不用动 sed / awk。"],
+["tool","文件与代码","search_files","搜文件","按内容正则搜、或按文件名找。比 grep 快。"],
+["tool","文件与代码","terminal","执行命令","在你机器上跑命令（你这里是 git-bash，不是 PowerShell）。"],
+["tool","文件与代码","execute_code","批量跑 Python","写脚本一次处理几百个文件 / 循环 + 判断，省得我一步步来。"],
+["tool","上网","web_search","搜网页","常规网络搜索。"],
+["tool","上网","web_extract","抓网页正文","把网页 / PDF 抓成干净文字。抓不动就换真浏览器。"],
+["tool","上网","browser_exec","真浏览器","开真 Chrome，能点、能填表、能截图、能执行 JS。登录后需要操作的页面靠它。"],
+["tool","看图说话","vision_analyze","看图","截图、照片、图表、手写稿，我都能真的“看”，不是猜。"],
+["tool","看图说话","text_to_speech","文字转语音","把文字转成语音文件，可以选语速和语气。"],
+["tool","干活","delegate_task","派分身","同时开好几个我，各自独立上下文并行干活，只把结果汇总回来。"],
+["tool","干活","todo_list","任务清单","多步任务时列个清单，你可以随时看进度。"],
+["tool","干活","cronjob_manage","定时任务","建定时作业：每天 / 每周自动跑，比如价格监控、新闻摘要。"],
+["tool","记忆","skills_list","列技能","看我现有哪些技能。"],
+["tool","记忆","skill_view","读技能","加载某个技能的完整步骤和踩坑记录。"],
+["tool","记忆","skill_manage","写技能","新建 / 修改技能。技能是我的“程序性记忆”，干中学、下次自动带上。"],
+["tool","记忆","memory","长期记忆","你是谁、这机器的习惯性事实。跨会话永久带着。"],
+["tool","记忆","session_search","翻旧账","搜索 / 阅读以前的对话记录。"],
+["tool","桌面控制","computer_use","直接操作桌面","截屏 + 移动鼠标 + 键盘。对付没有命令行的软件界面。"],
+["tool","桌面控制","desktop_preview","预览面板","在聊天旁边打开 / 关闭 / 读取预览窗口。"],
+["tool","桌面控制","drive_preview","操纵预览页面","直接操作预览面板里那个网页。"],
+["tool","桌面控制","annotate_preview","页面涂注","在预览页上把要点高亮圈出来（持久保留）。"],
+["tool","桌面控制","show_tip","指给你看","在界面上某处放个小箭头 + 文字提示。"],
+["tool","桌面控制","gui_tour","界面导览","把屏幕压暗，一步步高亮带你走界面。"],
+["tool","桌面控制","set_theme","换主题","改 Hermes 的强调色、深浅色、字体。"],
+["tool","桌面控制","read_terminal","读内置终端","读聊天旁边那个终端面板的内容。"],
+["tool","桌面控制","read_window_below","看后面的窗口","认出 Hermes 背后那个程序窗口是什么。"],
+["tool","桌面控制","focus_pane","聚焦面板","把某个 Hermes 面板调出来并聚焦。"],
+["tool","桌面控制","desktop_project","项目工作区","新建 / 切换桌面「项目」（命名的工作区）。"],
+["tool","连接","manage_connections","接入外部账号","连 Gmail、Notion 这类账号，或安装本地 MCP 服务器。"],
+["tool","连接","browser_vault","密码库","你存好的登录凭据。登录表单由它代填——我从来看不到明文。"],
+["tool","连接","manage_catalog","插件商店","查找并安装 Hermes 的插件和技能包。"]
+];
+
+const CAT_COLORS = {};
+let filter="all", query="";
+const out=document.getElementById("out"), cnt=document.getElementById("cnt");
+document.getElementById("tot").textContent = DATA.length;
+
+function render(){
+  const q = query.trim().toLowerCase();
+  const rows = DATA.filter(r => (filter==="all"||r[0]===filter) &&
+    (!q || (r[1]+r[2]+r[3]+r[4]).toLowerCase().includes(q)));
+  cnt.textContent = rows.length + " / " + DATA.length;
+  if(!rows.length){ out.innerHTML='<div class="empty">没找到。换个词试试，比如「视频」「硬件」「pdf」。</div>'; return; }
+  // 按 技能/工具 → 分类 分组
+  const groups = new Map();
+  rows.forEach(r=>{
+    const key = (r[0]==="skill"?"🛠 技能 · ":"⚙ 工具 · ") + r[1];
+    if(!groups.has(key)) groups.set(key,[]);
+    groups.get(key).push(r);
+  });
+  let html="";
+  groups.forEach((items,key)=>{
+    html += '<section><h2>'+key+'</h2><div class="grid">';
+    items.forEach(r=>{
+      html += '<div class="item"><div class="n">'+r[3]+' <code>'+r[2]+'</code></div><div class="d">'+r[4]+'</div></div>';
+    });
+    html += '</div></section>';
+  });
+  out.innerHTML = html;
+}
+
+document.getElementById("q").addEventListener("input", e=>{ query=e.target.value; render(); });
+document.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); filter=b.dataset.c; render();
+}));
+render();
+</script>
+</body>
+</html>
